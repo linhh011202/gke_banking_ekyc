@@ -1,0 +1,10 @@
+swagger: "2.0"
+info:
+  title: "Cloud Endpoints DNS"
+  description: "DNS configuration for Banking eKYC API"
+  version: "1.0.0"
+host: "api.endpoints.banking-ekyc-487718.cloud.goog"
+x-google-endpoints:
+- name: "api.endpoints.banking-ekyc-487718.cloud.goog"
+  target: "34.120.0.187"
+paths: {}

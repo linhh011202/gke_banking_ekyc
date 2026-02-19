@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kong-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: kong-ingress-ip
+    networking.gke.io/managed-certificates: kong-managed-cert
+    networking.gke.io/v1beta1.FrontendConfig: kong-frontend-config
+spec:
+  defaultBackend:
+    service:
+      name: kong-gateway
+      port:
+        number: 80

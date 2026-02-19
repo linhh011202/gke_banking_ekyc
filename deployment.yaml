@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-service-banking-ekyc
+  namespace: default
+  labels:
+    app: identity-service-banking-ekyc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-service-banking-ekyc
+  template:
+    metadata:
+      labels:
+        app: identity-service-banking-ekyc
+    spec:
+      containers:
+        - name: identity-service-banking-ekyc
+          image: us-central1-docker.pkg.dev/banking-ekyc-487718/identity-service/identity-service-banking-ekyc:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/secrets/config.yaml
+              subPath: config.yaml
+              readOnly: true
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+      volumes:
+        - name: config-volume
+          secret:
+            secretName: identity-service-secrets
+            items:
+              - key: config.yaml
+                path: config.yaml

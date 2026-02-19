@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kong-declarative-config
+  namespace: default
+data:
+  kong.yml: |
+    _format_version: "3.0"
+    _transform: true
+
+    services:
+      - name: identity-service
+        url: http://identity-service-banking-ekyc.default.svc.cluster.local:80
+        routes:
+          - name: identity-route
+            paths:
+              - /
+            strip_path: false
