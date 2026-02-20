@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# face-matching-start.sh — Mở lại cả hai pod face-matching (restore replicas)
+# face-matching-start.sh — Restart both face-matching pods (restore replicas)
 # Usage: ./scripts/face-matching-start.sh
 
 set -euo pipefail

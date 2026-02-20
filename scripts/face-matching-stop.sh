@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# face-matching-stop.sh — Tắt tạm thời cả hai pod face-matching (scale to 0)
+# face-matching-stop.sh — Temporarily stop both face-matching pods (scale to 0)
 # Usage: ./scripts/face-matching-stop.sh
 
 set -euo pipefail

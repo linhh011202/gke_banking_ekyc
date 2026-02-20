@@ -135,14 +135,14 @@ kubectl logs -l app=face-matching -f
 
 ## Cost Optimization (Auto Scale-Down)
 
-GKE nodes chạy liên tục dù không có traffic → tốn tiền. Các bước dưới đây giúp **tắt cluster khi không dùng**.
+GKE nodes run continuously even with no traffic, incurring unnecessary costs. Follow the steps below to **shut down the cluster when not in use**.
 
-### 1. Bật Cluster Autoscaler với min-nodes = 0
+### 1. Enable Cluster Autoscaler with min-nodes = 0
 
-Khi tất cả deployments scale về 0 replicas, cluster autoscaler sẽ tự xóa node idle sau ~10 phút.
+When all deployments scale to 0 replicas, the cluster autoscaler automatically removes idle nodes after ~10 minutes.
 
 ```bash
-# Thay POOL_NAME bằng tên node pool của bạn (xem: gcloud container node-pools list --cluster=banking-ekyc-cluster --region=us-central1)
+# Replace POOL_NAME with your node pool name (see: gcloud container node-pools list --cluster=banking-ekyc-cluster --region=us-central1)
 gcloud container clusters update banking-ekyc-cluster \
   --region us-central1 \
   --project banking-ekyc-487718
@@ -155,10 +155,10 @@ gcloud container node-pools update <POOL_NAME> \
   --max-nodes=3
 ```
 
-### 2. Dùng Spot Nodes (tiết kiệm 60–91%)
+### 2. Use Spot Nodes (save 60–91%)
 
 ```bash
-# Thêm node pool riêng dùng Spot VM
+# Add a dedicated node pool using Spot VMs
 gcloud container node-pools create spot-pool \
   --cluster banking-ekyc-cluster \
   --region us-central1 \
@@ -170,41 +170,41 @@ gcloud container node-pools create spot-pool \
   --num-nodes=0
 ```
 
-> **Lưu ý:** Spot nodes có thể bị Google preempt bất kỳ lúc nào — chỉ nên dùng cho dev/staging, không dùng cho production.
+> **Note:** Spot nodes can be preempted by Google at any time — use only for dev/staging, not production.
 
-### 3. Scale thủ công (nhanh nhất)
+### 3. Manual scale (fastest)
 
 ```bash
-# Tắt tất cả khi không dùng
+# Stop everything when not in use
 ./scripts/scale-down.sh
 
-# Bật lại khi cần
+# Bring it back up when needed
 ./scripts/scale-up.sh
 ```
 
-### 4. Tự động scale theo giờ làm việc (Mon–Fri, 07:00–23:00 ICT)
+### 4. Auto-scale on working hours (Mon–Fri, 07:00–23:00 ICT)
 
 ```bash
 kubectl apply -f auto-scale-cronjob.yaml
 
-# Kiểm tra CronJob
+# Check CronJob status
 kubectl get cronjobs
 # NAME             SCHEDULE      SUSPEND   ACTIVE
 # scale-down-eod   0 16 * * 1-5  False     0
 # scale-up-sod     0 0  * * 1-5  False     0
 
-# Chạy thử ngay (không cần đợi schedule)
+# Run immediately (no need to wait for the schedule)
 kubectl create job --from=cronjob/scale-down-eod test-scale-down
 kubectl logs -l job-name=test-scale-down -f
 ```
 
-### 5. Ước tính tiết kiệm
+### 5. Estimated savings
 
-| Cấu hình | Chi phí/tháng (ước tính) |
-|----------|--------------------------|
+| Configuration | Estimated cost/month |
+|---------------|----------------------|
 | Standard nodes, 24/7 | ~$120–200 |
-| Standard nodes, 8h/ngày × 5 ngày/tuần | ~$35–60 |
-| Spot nodes, 8h/ngày × 5 ngày/tuần | ~$5–15 |
+| Standard nodes, 8h/day × 5 days/week | ~$35–60 |
+| Spot nodes, 8h/day × 5 days/week | ~$5–15 |
 
 ---
 
