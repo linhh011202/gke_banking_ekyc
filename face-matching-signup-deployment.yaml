@@ -8,6 +8,7 @@ metadata:
     worker: signup
 spec:
   replicas: 1
+  progressDeadlineSeconds: 620
   selector:
     matchLabels:
       app: face-matching
