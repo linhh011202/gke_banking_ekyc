@@ -20,10 +20,17 @@ spec:
           image: us-central1-docker.pkg.dev/banking-ekyc-487718/identity-service/identity-service-banking-ekyc:latest
           ports:
             - containerPort: 8080
+          env:
+            - name: FIREBASE_CREDENTIALS_PATH
+              value: "/app/secrets/firebase_credentials.json"
           volumeMounts:
             - name: config-volume
               mountPath: /app/secrets/config.yaml
               subPath: config.yaml
+              readOnly: true
+            - name: config-volume
+              mountPath: /app/secrets/firebase_credentials.json
+              subPath: firebase_credentials.json
               readOnly: true
           resources:
             limits:
@@ -39,3 +46,5 @@ spec:
             items:
               - key: config.yaml
                 path: config.yaml
+              - key: firebase_credentials.json
+                path: firebase_credentials.json
