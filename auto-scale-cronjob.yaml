@@ -1,0 +1,160 @@
+################################################################################
+# auto-scale-cronjob.yaml
+#
+# Automatically scales all deployments to 0 at end-of-day (23:00 ICT / 16:00 UTC)
+# and back up at start-of-day (07:00 ICT / 00:00 UTC), Mon–Fri.
+#
+# Adjust the `schedule` fields to your timezone / working hours.
+# ICT = UTC+7  →  e.g. 16:00 UTC = 23:00 ICT
+#
+# Deploy:
+#   kubectl apply -f auto-scale-cronjob.yaml
+################################################################################
+
+---
+# ServiceAccount used by the CronJob pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: auto-scaler
+  namespace: default
+
+---
+# Role: allow get/patch on deployments (just enough to scale)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deployment-scaler
+  namespace: default
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "update", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: auto-scaler-binding
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: auto-scaler
+    namespace: default
+roleRef:
+  kind: Role
+  name: deployment-scaler
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# CronJob: Scale DOWN at 23:00 ICT (16:00 UTC), Mon–Fri
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scale-down-eod
+  namespace: default
+  labels:
+    app: auto-scaler
+spec:
+  # 16:00 UTC = 23:00 ICT (Mon–Fri)
+  schedule: "0 16 * * 1-5"
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: auto-scaler
+          restartPolicy: OnFailure
+          containers:
+            - name: kubectl
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  NAMESPACE=default
+                  DEPLOYMENTS="identity-service-banking-ekyc face-matching kong-gateway"
+
+                  echo "==> [$(date)] Scaling down all deployments..."
+                  for d in $DEPLOYMENTS; do
+                    if kubectl get deployment "$d" -n "$NAMESPACE" > /dev/null 2>&1; then
+                      CURRENT=$(kubectl get deployment "$d" -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.replicas}')
+                      kubectl annotate deployment "$d" -n "$NAMESPACE" \
+                        auto-scale/previous-replicas="$CURRENT" --overwrite
+                      kubectl scale deployment "$d" -n "$NAMESPACE" --replicas=0
+                      echo "  ✓ $d scaled down (was $CURRENT)"
+                    fi
+                  done
+                  echo "==> Done."
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "64Mi"
+                limits:
+                  cpu: "100m"
+                  memory: "128Mi"
+
+---
+# CronJob: Scale UP at 07:00 ICT (00:00 UTC), Mon–Fri
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scale-up-sod
+  namespace: default
+  labels:
+    app: auto-scaler
+spec:
+  # 00:00 UTC = 07:00 ICT (Mon–Fri)
+  schedule: "0 0 * * 1-5"
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: auto-scaler
+          restartPolicy: OnFailure
+          containers:
+            - name: kubectl
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  NAMESPACE=default
+
+                  # default replicas if annotation is missing
+                  declare -A DEFAULTS
+                  DEFAULTS[identity-service-banking-ekyc]=1
+                  DEFAULTS[face-matching]=1
+                  DEFAULTS[kong-gateway]=1
+
+                  echo "==> [$(date)] Scaling up all deployments..."
+                  for d in "${!DEFAULTS[@]}"; do
+                    if kubectl get deployment "$d" -n "$NAMESPACE" > /dev/null 2>&1; then
+                      PREVIOUS=$(kubectl get deployment "$d" -n "$NAMESPACE" \
+                        -o jsonpath='{.metadata.annotations.auto-scale/previous-replicas}' 2>/dev/null || true)
+                      TARGET="${PREVIOUS:-${DEFAULTS[$d]}}"
+                      kubectl scale deployment "$d" -n "$NAMESPACE" --replicas="$TARGET"
+                      echo "  ✓ $d scaled up to $TARGET replicas"
+                    fi
+                  done
+                  echo "==> Done."
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "64Mi"
+                limits:
+                  cpu: "100m"
+                  memory: "128Mi"

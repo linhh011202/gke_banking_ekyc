@@ -131,6 +131,83 @@ kubectl logs -l app=face-matching -f
 
 ---
 
+---
+
+## Cost Optimization (Auto Scale-Down)
+
+GKE nodes chạy liên tục dù không có traffic → tốn tiền. Các bước dưới đây giúp **tắt cluster khi không dùng**.
+
+### 1. Bật Cluster Autoscaler với min-nodes = 0
+
+Khi tất cả deployments scale về 0 replicas, cluster autoscaler sẽ tự xóa node idle sau ~10 phút.
+
+```bash
+# Thay POOL_NAME bằng tên node pool của bạn (xem: gcloud container node-pools list --cluster=banking-ekyc-cluster --region=us-central1)
+gcloud container clusters update banking-ekyc-cluster \
+  --region us-central1 \
+  --project banking-ekyc-487718
+
+gcloud container node-pools update <POOL_NAME> \
+  --cluster banking-ekyc-cluster \
+  --region us-central1 \
+  --enable-autoscaling \
+  --min-nodes=0 \
+  --max-nodes=3
+```
+
+### 2. Dùng Spot Nodes (tiết kiệm 60–91%)
+
+```bash
+# Thêm node pool riêng dùng Spot VM
+gcloud container node-pools create spot-pool \
+  --cluster banking-ekyc-cluster \
+  --region us-central1 \
+  --spot \
+  --machine-type=e2-standard-2 \
+  --enable-autoscaling \
+  --min-nodes=0 \
+  --max-nodes=3 \
+  --num-nodes=0
+```
+
+> **Lưu ý:** Spot nodes có thể bị Google preempt bất kỳ lúc nào — chỉ nên dùng cho dev/staging, không dùng cho production.
+
+### 3. Scale thủ công (nhanh nhất)
+
+```bash
+# Tắt tất cả khi không dùng
+./scripts/scale-down.sh
+
+# Bật lại khi cần
+./scripts/scale-up.sh
+```
+
+### 4. Tự động scale theo giờ làm việc (Mon–Fri, 07:00–23:00 ICT)
+
+```bash
+kubectl apply -f auto-scale-cronjob.yaml
+
+# Kiểm tra CronJob
+kubectl get cronjobs
+# NAME             SCHEDULE      SUSPEND   ACTIVE
+# scale-down-eod   0 16 * * 1-5  False     0
+# scale-up-sod     0 0  * * 1-5  False     0
+
+# Chạy thử ngay (không cần đợi schedule)
+kubectl create job --from=cronjob/scale-down-eod test-scale-down
+kubectl logs -l job-name=test-scale-down -f
+```
+
+### 5. Ước tính tiết kiệm
+
+| Cấu hình | Chi phí/tháng (ước tính) |
+|----------|--------------------------|
+| Standard nodes, 24/7 | ~$120–200 |
+| Standard nodes, 8h/ngày × 5 ngày/tuần | ~$35–60 |
+| Spot nodes, 8h/ngày × 5 ngày/tuần | ~$5–15 |
+
+---
+
 ## Troubleshooting
 
 | Issue | Solution |
