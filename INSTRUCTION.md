@@ -217,4 +217,5 @@ kubectl logs -l job-name=test-scale-down -f
 | **502 Bad Gateway** | Kong pod might not be ready or health check failing. Check `kubectl get events`. |
 | **face-matching OOMKilled** | TF needs ~2.5GB RAM. Increase node pool machine type or the memory limit in `face-matching-deployment.yaml`. |
 | **face-matching CrashLoopBackOff** | Check logs: `kubectl logs -l app=face-matching --previous`. Usually a missing secret or wrong `CONFIG_PATH`. |
-| **PubSub permission denied** | Grant the GKE node service account `roles/pubsub.subscriber` on the `banking-ekyc-sign-up-sub` subscription. |
+| **PubSub 403 publish denied** | The pod SA lacks `roles/pubsub.publisher`. Either grant it to the node SA (`<PROJECT_NUMBER>-compute@developer.gserviceaccount.com`) or use Workload Identity: create `identity-service-sa`, grant it `roles/pubsub.publisher`, annotate K8s SA `identity-service-ksa`, and set `serviceAccountName: identity-service-ksa` in `deployment.yaml`. |
+| **PubSub 403 subscribe denied** | Grant the GKE node service account `roles/pubsub.subscriber` on the `banking-ekyc-sign-up-sub` subscription. |

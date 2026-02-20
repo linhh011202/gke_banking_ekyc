@@ -15,6 +15,7 @@ spec:
       labels:
         app: identity-service-banking-ekyc
     spec:
+      serviceAccountName: identity-service-ksa  # Workload Identity — grants Pub/Sub Publisher
       containers:
         - name: identity-service-banking-ekyc
           image: us-central1-docker.pkg.dev/banking-ekyc-487718/identity-service/identity-service-banking-ekyc:latest
