@@ -29,6 +29,8 @@ spec:
               value: "/app/secrets/firebase_credentials.json"
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: "/app/secrets/firebase_credentials.json"
+            - name: PUBSUB_SIGNIN_SUBSCRIPTION
+              value: "banking-ekyc-sign-in-sub"
             - name: TF_CPP_MIN_LOG_LEVEL
               value: "2"
             - name: TF_ENABLE_ONEDNN_OPTS
