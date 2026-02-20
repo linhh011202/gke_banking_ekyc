@@ -1,0 +1,31 @@
+# Credentials & secrets — NEVER commit these
+firebase_credentials.json
+*credentials*.json
+*service_account*.json
+*.key
+*.pem
+*.p12
+*.pfx
+.env
+.env.*
+
+# Local config — contains passwords/API keys
+config.yaml
+
+# Kubernetes secrets & kubeconfig
+kubeconfig
+*.kubeconfig
+*-secret.yaml
+*-secrets.yaml
+
+# Terraform / generated state (if ever used)
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
