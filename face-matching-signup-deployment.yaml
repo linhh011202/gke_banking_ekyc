@@ -1,38 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: face-matching
+  name: face-matching-signup
   namespace: default
   labels:
     app: face-matching
+    worker: signup
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: face-matching
+      worker: signup
   template:
     metadata:
       labels:
         app: face-matching
+        worker: signup
     spec:
       containers:
-        - name: face-matching
+        - name: face-matching-signup
           image: us-central1-docker.pkg.dev/banking-ekyc-487718/face-matching/face-matching:latest
+          command: ["python", "-m", "app.main", "worker-signup"]
           env:
-            # Point to mounted secret files
             - name: CONFIG_PATH
               value: "/app/secrets/config.yaml"
             - name: FIREBASE_CREDENTIALS_PATH
               value: "/app/secrets/firebase_credentials.json"
-            # Use firebase service account for all GCP API calls (PubSub, Storage, etc.)
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: "/app/secrets/firebase_credentials.json"
-            # Suppress TensorFlow startup noise in logs
             - name: TF_CPP_MIN_LOG_LEVEL
               value: "2"
             - name: TF_ENABLE_ONEDNN_OPTS
               value: "0"
-            # Allow GPU memory growth (safe no-op on CPU-only nodes)
             - name: TF_FORCE_GPU_ALLOW_GROWTH
               value: "true"
           volumeMounts:
@@ -40,7 +40,6 @@ spec:
               mountPath: /app/secrets
               readOnly: true
           resources:
-            # TF + ArcFace model inference requires significant memory
             requests:
               cpu: "500m"
               memory: "2Gi"

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: face-matching-signin
+  namespace: default
+  labels:
+    app: face-matching
+    worker: signin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: face-matching
+      worker: signin
+  template:
+    metadata:
+      labels:
+        app: face-matching
+        worker: signin
+    spec:
+      containers:
+        - name: face-matching-signin
+          image: us-central1-docker.pkg.dev/banking-ekyc-487718/face-matching/face-matching:latest
+          command: ["python", "-m", "app.main", "worker-signin"]
+          env:
+            - name: CONFIG_PATH
+              value: "/app/secrets/config.yaml"
+            - name: FIREBASE_CREDENTIALS_PATH
+              value: "/app/secrets/firebase_credentials.json"
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/app/secrets/firebase_credentials.json"
+            - name: TF_CPP_MIN_LOG_LEVEL
+              value: "2"
+            - name: TF_ENABLE_ONEDNN_OPTS
+              value: "0"
+            - name: TF_FORCE_GPU_ALLOW_GROWTH
+              value: "true"
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: /app/secrets
+              readOnly: true
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+      volumes:
+        - name: secrets-volume
+          secret:
+            secretName: face-matching-secrets
+            items:
+              - key: config.yaml
+                path: config.yaml
+              - key: firebase_credentials.json
+                path: firebase_credentials.json
