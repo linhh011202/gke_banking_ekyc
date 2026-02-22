@@ -8,7 +8,7 @@ metadata:
     worker: signin
 spec:
   replicas: 1
-  progressDeadlineSeconds: 1800
+  progressDeadlineSeconds: 2400
   selector:
     matchLabels:
       app: face-matching
