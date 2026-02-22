@@ -20,7 +20,8 @@ fi
 
 DEPLOYMENTS=(
   identity-service-banking-ekyc
-  face-matching
+  face-matching-signup
+  face-matching-signin
   kong-gateway
 )
 

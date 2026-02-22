@@ -20,7 +20,8 @@ fi
 # Default replica counts if annotation is missing
 declare -A DEFAULTS=(
   [identity-service-banking-ekyc]=1
-  [face-matching]=1
+  [face-matching-signup]=1
+  [face-matching-signin]=1
   [kong-gateway]=1
 )
 
