@@ -80,7 +80,7 @@ spec:
                 - |
                   set -e
                   NAMESPACE=default
-                  DEPLOYMENTS="identity-service-banking-ekyc face-matching kong-gateway"
+                  DEPLOYMENTS="identity-service-banking-ekyc face-matching-signup face-matching-signin kong-gateway"
 
                   echo "==> [$(date)] Scaling down all deployments..."
                   for d in $DEPLOYMENTS; do
@@ -137,7 +137,8 @@ spec:
                   # default replicas if annotation is missing
                   declare -A DEFAULTS
                   DEFAULTS[identity-service-banking-ekyc]=1
-                  DEFAULTS[face-matching]=1
+                  DEFAULTS[face-matching-signup]=1
+                  DEFAULTS[face-matching-signin]=1
                   DEFAULTS[kong-gateway]=1
 
                   echo "==> [$(date)] Scaling up all deployments..."

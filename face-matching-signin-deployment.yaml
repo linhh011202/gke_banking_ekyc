@@ -8,7 +8,7 @@ metadata:
     worker: signin
 spec:
   replicas: 1
-  progressDeadlineSeconds: 2400
+  progressDeadlineSeconds: 600
   selector:
     matchLabels:
       app: face-matching
@@ -20,14 +20,6 @@ spec:
         worker: signin
     spec:
       terminationGracePeriodSeconds: 30
-      nodeSelector:
-        cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
-        cloud.google.com/gke-gpu-sharing-strategy: "time-sharing"
-        cloud.google.com/gke-max-shared-clients-per-gpu: "2"
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
       containers:
         - name: face-matching-signin
           image: us-central1-docker.pkg.dev/banking-ekyc-487718/face-matching/face-matching:latest
@@ -45,8 +37,8 @@ spec:
               value: "2"
             - name: TF_ENABLE_ONEDNN_OPTS
               value: "0"
-            - name: TF_FORCE_GPU_ALLOW_GROWTH
-              value: "true"
+            - name: CUDA_VISIBLE_DEVICES
+              value: ""
             - name: PUBSUB_MAX_MESSAGES
               value: "20"
             - name: DOWNLOAD_WORKERS
@@ -77,13 +69,11 @@ spec:
               readOnly: true
           resources:
             requests:
-              cpu: "500m"
-              memory: "2Gi"
-              nvidia.com/gpu: "1"
-            limits:
-              cpu: "2000m"
+              cpu: "2"
               memory: "4Gi"
-              nvidia.com/gpu: "1"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
       volumes:
         - name: secrets-volume
           secret:
