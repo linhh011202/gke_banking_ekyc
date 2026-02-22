@@ -22,6 +22,8 @@ spec:
       terminationGracePeriodSeconds: 30
       nodeSelector:
         cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+        cloud.google.com/gke-gpu-sharing-strategy: "time-sharing"
+        cloud.google.com/gke-max-shared-clients-per-gpu: "2"
       tolerations:
         - key: nvidia.com/gpu
           operator: Exists
