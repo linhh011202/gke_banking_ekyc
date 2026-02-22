@@ -8,7 +8,7 @@ metadata:
     worker: signup
 spec:
   replicas: 1
-  progressDeadlineSeconds: 620
+  progressDeadlineSeconds: 1800
   selector:
     matchLabels:
       app: face-matching
@@ -19,6 +19,7 @@ spec:
         app: face-matching
         worker: signup
     spec:
+      terminationGracePeriodSeconds: 30
       nodeSelector:
         cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
       tolerations:
@@ -43,6 +44,18 @@ spec:
             - name: TF_ENABLE_ONEDNN_OPTS
               value: "0"
             - name: TF_FORCE_GPU_ALLOW_GROWTH
+              value: "true"
+            - name: PUBSUB_MAX_MESSAGES
+              value: "20"
+            - name: DOWNLOAD_WORKERS
+              value: "8"
+            - name: EMBEDDING_WORKERS
+              value: "2"
+            - name: SIGNUP_EMBEDDING_WORKERS
+              value: "2"
+            - name: SIGNUP_MAX_IMAGES_PER_POSE
+              value: "1"
+            - name: EMBEDDING_WARMUP
               value: "true"
           volumeMounts:
             - name: secrets-volume

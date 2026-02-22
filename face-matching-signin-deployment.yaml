@@ -8,7 +8,7 @@ metadata:
     worker: signin
 spec:
   replicas: 1
-  progressDeadlineSeconds: 620
+  progressDeadlineSeconds: 1800
   selector:
     matchLabels:
       app: face-matching
@@ -19,6 +19,7 @@ spec:
         app: face-matching
         worker: signin
     spec:
+      terminationGracePeriodSeconds: 30
       nodeSelector:
         cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
       tolerations:
@@ -43,6 +44,30 @@ spec:
             - name: TF_ENABLE_ONEDNN_OPTS
               value: "0"
             - name: TF_FORCE_GPU_ALLOW_GROWTH
+              value: "true"
+            - name: PUBSUB_MAX_MESSAGES
+              value: "20"
+            - name: DOWNLOAD_WORKERS
+              value: "6"
+            - name: EMBEDDING_WORKERS
+              value: "2"
+            - name: EMBEDDING_ENFORCE_DETECTION
+              value: "false"
+            - name: SIGNIN_USE_DB_EMBEDDINGS
+              value: "true"
+            - name: SIGNIN_ALLOW_ON_DEMAND_REGISTERED_EMBEDDINGS
+              value: "false"
+            - name: SIGNIN_MAX_LOGIN_IMAGES
+              value: "3"
+            - name: SIGNIN_DISTANCE_THRESHOLD
+              value: "0.68"
+            - name: SIGNIN_PERSONALIZATION_ENABLED
+              value: "true"
+            - name: SIGNIN_PERSONALIZATION_MAX_EMBEDDINGS
+              value: "5"
+            - name: SIGNIN_UPDATE_LOGIN_EMBEDDING
+              value: "true"
+            - name: EMBEDDING_WARMUP
               value: "true"
           volumeMounts:
             - name: secrets-volume
