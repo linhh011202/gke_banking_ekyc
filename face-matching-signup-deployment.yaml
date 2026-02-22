@@ -19,6 +19,12 @@ spec:
         app: face-matching
         worker: signup
     spec:
+      nodeSelector:
+        cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: face-matching-signup
           image: us-central1-docker.pkg.dev/banking-ekyc-487718/face-matching/face-matching:latest
@@ -46,9 +52,11 @@ spec:
             requests:
               cpu: "500m"
               memory: "2Gi"
+              nvidia.com/gpu: "1"
             limits:
               cpu: "2000m"
               memory: "4Gi"
+              nvidia.com/gpu: "1"
       volumes:
         - name: secrets-volume
           secret:
