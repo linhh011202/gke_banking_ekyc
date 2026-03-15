@@ -27,10 +27,14 @@ declare -A DEFAULTS=(
 
 for deploy in "${!DEFAULTS[@]}"; do
   if kubectl get deployment "$deploy" -n "$NAMESPACE" &>/dev/null; then
-    # Read saved replica count from annotation
+    # Read saved replica count from annotation; fall back to default if 0 or missing
     PREVIOUS=$(kubectl get deployment "$deploy" -n "$NAMESPACE" \
       -o jsonpath='{.metadata.annotations.auto-scale/previous-replicas}' 2>/dev/null || echo "")
-    TARGET="${PREVIOUS:-${DEFAULTS[$deploy]}}"
+    if [[ -z "$PREVIOUS" || "$PREVIOUS" -eq 0 ]]; then
+      TARGET="${DEFAULTS[$deploy]}"
+    else
+      TARGET="$PREVIOUS"
+    fi
     kubectl scale deployment "$deploy" -n "$NAMESPACE" --replicas="$TARGET"
     echo "  ✓ $deploy scaled up to $TARGET replicas"
   else
